@@ -456,7 +456,7 @@ bool maximization(network &Alarm)
 // write cpt to a file
 void write_network(network &Alarm, string filename)
 {
-    ifstream myfile(filename);
+    ifstream ref_file(filename);
     ofstream outfile;
     outfile.open("solved_alarm.bif");
     outfile << setprecision(4) << fixed;
@@ -464,18 +464,18 @@ void write_network(network &Alarm, string filename)
     string temp;
     string name;
     int counter = 0;
-    if (myfile.is_open())
+    if (ref_file.is_open())
     {
-        while (!myfile.eof())
+        while (!ref_file.eof())
         {
             stringstream ss;
-            getline(myfile, line);
+            getline(ref_file, line);
             ss.str(line);
             ss >> temp;
             if (temp.compare("probability") == 0)
             {
                 outfile << line << "\n";
-                getline(myfile, line);
+                getline(ref_file, line);
                 outfile << "\ttable ";
                 // cpt of index counter
                 vector<double> CPT = Alarm.get_nth_node(counter)->get_CPT();
@@ -492,7 +492,7 @@ void write_network(network &Alarm, string filename)
                     outfile << line;
             }
         }
-        myfile.close();
+        ref_file.close();
         outfile.close();
     }
 }
