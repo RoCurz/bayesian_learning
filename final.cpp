@@ -328,8 +328,9 @@ int get_CPT_Index(vector<int> &val, vector<int> &sizes)
 }
 
 // calculate the expectation of missing values
-void expectation(network &Alarm)
+bool expectation_maximization(network &Alarm)
 {
+    //expectation 
     weights.clear();
     for (int i = 0; i < graph_data.size(); i++)
     {
@@ -394,10 +395,8 @@ void expectation(network &Alarm)
             }
         }
     }
-}
 
-bool maximization(network &Alarm)
-{
+    // maximization
     double max_diff = 0.0;
     for (int i = 0; i < Alarm.netSize(); i++)
     {
@@ -508,8 +507,7 @@ int main(int argc, char **argv)
     read_data(argv[2], Alarm);
     while (true)
     {
-        expectation(Alarm);
-        bool f = maximization(Alarm);
+        bool f = expectation_maximization(Alarm);
         if (f)
             break;
         auto curr_time = chrono::high_resolution_clock::now();
