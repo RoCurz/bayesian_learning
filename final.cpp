@@ -269,7 +269,7 @@ vector<vector<int>> data;
 vector<int> missing;
 vector<vector<int> > datapoints;
 vector<double> weights;
-ofstream outf("output.txt");
+// ofstream outf("output.txt");
 // read data from records.dat and store them in above variables
 void read_data(string datafile, network &Alarm){
     ifstream myfile(datafile);
