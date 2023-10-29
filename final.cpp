@@ -25,12 +25,12 @@ private:
 
 public:
     // Constructor- a node is initialised with its name and its categories
-    Graph_Node(string name, int n, vector<string> vals)
+    Graph_Node(string name, int n, vector<string> val)
     {
         Node_Name = name;
 
         nvalues = n;
-        values = vals;
+        values = val;
     }
     string get_name()
     {
@@ -252,7 +252,7 @@ vector<double> weights;
 void read_data(string datafile, network &Alarm)
 {
     ifstream myfile(datafile);
-    string vals, line;
+    string val, line;
     while (!myfile.eof())
     {
         stringstream ss;
@@ -261,14 +261,14 @@ void read_data(string datafile, network &Alarm)
         int ind = 0;
         bool flag = false;
         vector<int> temp;
-        while (ss >> vals)
+        while (ss >> val)
         {
-            if (vals == "\"?\"")
+            if (val == "\"?\"")
             {
                 missing.push_back(ind);
                 flag = true;
             }
-            temp.push_back(Alarm.get_nth_node(ind)->get_value_ind(vals));
+            temp.push_back(Alarm.get_nth_node(ind)->get_value_ind(val));
             ind++;
         }
         if (!flag)
@@ -311,9 +311,9 @@ void init_CPT(network &Alarm)
     }
 }
 
-int get_CPT_Index(vector<int> &vals, vector<int> &sizes)
+int get_CPT_Index(vector<int> &val, vector<int> &sizes)
 {
-    if (vals.size() == 0)
+    if (val.size() == 0)
     {
         return 0;
     }
@@ -321,7 +321,7 @@ int get_CPT_Index(vector<int> &vals, vector<int> &sizes)
     int M = sizes.size();
     for (int i = M - 1; i >= 0; i--)
     {
-        idx = idx + b * vals[i];
+        idx = idx + b * val[i];
         b = b * sizes[i];
     }
     return idx;
@@ -348,29 +348,29 @@ void expectation(network &Alarm)
                 numerator = 1.0;
                 vector<int> temp(graph_data[i].begin(), graph_data[i].end());
                 temp[missing_ind] = t;
-                vector<int> vals, sizes;
+                vector<int> val, sizes;
                 vector<int> children = Alarm.get_nth_node(missing_ind)->get_children();
                 for (int j = 0; j < children.size(); j++)
                 {
-                    vals.clear(), sizes.clear();
+                    val.clear(), sizes.clear();
                     int child = children[j];
                     int curr_size = Alarm.get_nth_node(child)->get_nvalues();
-                    vals.push_back(graph_data[i][child]);
+                    val.push_back(graph_data[i][child]);
                     sizes.push_back(curr_size);
                     vector<string> parents = Alarm.get_nth_node(child)->get_Parents();
                     for (int k = 0; k < parents.size(); k++)
                     {
                         string parent = parents[k];
                         int parent_ind = Alarm.get_index(parent);
-                        vals.push_back(temp[parent_ind]);
+                        val.push_back(temp[parent_ind]);
                         sizes.push_back(Alarm.get_nth_node(parent_ind)->get_nvalues());
                     }
-                    numerator = numerator * Alarm.get_nth_node(child)->get_CPT()[get_CPT_Index(vals, sizes)];
-                    // cout<<Alarm.get_nth_node(child)->get_CPT().size()<<" "<<get_CPT_Index(vals, sizes)<<"\n";
+                    numerator = numerator * Alarm.get_nth_node(child)->get_CPT()[get_CPT_Index(val, sizes)];
+                    // cout<<Alarm.get_nth_node(child)->get_CPT().size()<<" "<<get_CPT_Index(val, sizes)<<"\n";
                 }
                 denominator += numerator;
-                vals.clear(), sizes.clear();
-                vals.push_back(t);
+                val.clear(), sizes.clear();
+                val.push_back(t);
                 sizes.push_back(N);
                 vector<string> parents = Alarm.get_nth_node(missing_ind)->get_Parents();
                 for (int k = 0; k < parents.size(); k++)
@@ -378,10 +378,10 @@ void expectation(network &Alarm)
                     string parent = parents[k];
                     // cout<<parent<<"\n";
                     int parent_ind = Alarm.get_index(parent);
-                    vals.push_back(temp[parent_ind]);
+                    val.push_back(temp[parent_ind]);
                     sizes.push_back(Alarm.get_nth_node(parent_ind)->get_nvalues());
                 }
-                numerator = numerator * Alarm.get_nth_node(missing_ind)->get_CPT()[get_CPT_Index(vals, sizes)];
+                numerator = numerator * Alarm.get_nth_node(missing_ind)->get_CPT()[get_CPT_Index(val, sizes)];
                 all_nums.push_back(numerator);
                 // all_nums.push_back(numerator);
             }
@@ -401,15 +401,15 @@ bool maximization(network &Alarm)
     double max_diff = 0.0;
     for (int i = 0; i < Alarm.netSize(); i++)
     {
-        vector<int> vals, vals_idx, sizes;
-        vals_idx.push_back(i);
+        vector<int> val, val_idx, sizes;
+        val_idx.push_back(i);
         sizes.push_back(Alarm.get_nth_node(i)->get_nvalues());
         vector<string> parents = Alarm.get_nth_node(i)->get_Parents();
         for (int j = 0; j < parents.size(); j++)
         {
             string parent = parents[j];
             int parent_ind = Alarm.get_index(parent);
-            vals_idx.push_back(parent_ind);
+            val_idx.push_back(parent_ind);
             sizes.push_back(Alarm.get_nth_node(parent_ind)->get_nvalues());
         }
         vector<double> curr_cpt = Alarm.get_nth_node(i)->get_CPT();
@@ -418,14 +418,14 @@ bool maximization(network &Alarm)
         // start editing the cpt
         for (int j = 0; j < datapoints.size(); j++)
         {
-            vals.clear();
+            val.clear();
             int index;
-            for (int k = 0; k < vals_idx.size(); k++)
+            for (int k = 0; k < val_idx.size(); k++)
             {
-                vals.push_back(datapoints[j][vals_idx[k]]);
+                val.push_back(datapoints[j][val_idx[k]]);
             }
-            index = get_CPT_Index(vals, sizes);
-            // int curr_ind = get_CPT_Index(datapoints[j], vals_idx);
+            index = get_CPT_Index(val, sizes);
+            // int curr_ind = get_CPT_Index(datapoints[j], val_idx);
             denominators[index % MOD] += weights[j];
             numerators[index] += weights[j];
         }
