@@ -246,7 +246,7 @@ network read_network(string filename)
 vector<vector<int>> graph_data;
 vector<int> missing;
 vector<vector<int>> datapoints;
-vector<double> weights;
+vector<double> probabilities;
 // ofstream outf("output.txt");
 // read data from records.dat and store them in above variables
 void read_data(string datafile, network &Alarm)
@@ -295,7 +295,7 @@ void read_data(string datafile, network &Alarm)
     myfile.close();
 }
 
-void init_CPT(network &Alarm)
+void initialise_cpt(network &Alarm)
 {
     for (int i = 0; i < Alarm.netSize(); i++)
     {
@@ -311,7 +311,7 @@ void init_CPT(network &Alarm)
     }
 }
 
-int get_CPT_Index(vector<int> &val, vector<int> &sizes)
+int find_cpt_ind(vector<int> &val, vector<int> &sizes)
 {
     if (val.size() == 0)
     {
@@ -331,19 +331,19 @@ int get_CPT_Index(vector<int> &val, vector<int> &sizes)
 bool expectation_maximization(network &Alarm)
 {
     //expectation 
-    weights.clear();
+    probabilities.clear();
     for (int i = 0; i < graph_data.size(); i++)
     {
         int missing_ind = missing[i];
         if (missing_ind == -1)
         {
-            weights[i] = 1;
+            probabilities[i] = 1;
         }
         else
         {
             int N = Alarm.get_nth_node(missing_ind)->get_nvalues();
             double numerator, denominator = 0.0;
-            vector<double> all_nums;
+            vector<double> all_numerators;
             for (int t = 0; t < N; t++)
             {
                 numerator = 1.0;
@@ -366,8 +366,8 @@ bool expectation_maximization(network &Alarm)
                         val.push_back(temp[parent_ind]);
                         sizes.push_back(Alarm.get_nth_node(parent_ind)->get_nvalues());
                     }
-                    numerator = numerator * Alarm.get_nth_node(child)->get_CPT()[get_CPT_Index(val, sizes)];
-                    // cout<<Alarm.get_nth_node(child)->get_CPT().size()<<" "<<get_CPT_Index(val, sizes)<<"\n";
+                    numerator = numerator * Alarm.get_nth_node(child)->get_CPT()[find_cpt_ind(val, sizes)];
+                    // cout<<Alarm.get_nth_node(child)->get_CPT().size()<<" "<<find_cpt_ind(val, sizes)<<"\n";
                 }
                 denominator += numerator;
                 val.clear(), sizes.clear();
@@ -382,13 +382,13 @@ bool expectation_maximization(network &Alarm)
                     val.push_back(temp[parent_ind]);
                     sizes.push_back(Alarm.get_nth_node(parent_ind)->get_nvalues());
                 }
-                numerator = numerator * Alarm.get_nth_node(missing_ind)->get_CPT()[get_CPT_Index(val, sizes)];
-                all_nums.push_back(numerator);
-                // all_nums.push_back(numerator);
+                numerator = numerator * Alarm.get_nth_node(missing_ind)->get_CPT()[find_cpt_ind(val, sizes)];
+                all_numerators.push_back(numerator);
+                // all_numerators.push_back(numerator);
             }
-            for (int j = 0; j < all_nums.size(); j++)
+            for (int j = 0; j < all_numerators.size(); j++)
             {
-                weights.push_back(all_nums[j] / denominator);
+                probabilities.push_back(all_numerators[j] / denominator);
                 // if(isnan(denominator)){
                 //     cout<<denominator<<"\n";
                 // }
@@ -400,15 +400,15 @@ bool expectation_maximization(network &Alarm)
     double max_diff = 0.0;
     for (int i = 0; i < Alarm.netSize(); i++)
     {
-        vector<int> val, val_idx, sizes;
-        val_idx.push_back(i);
+        vector<int> val, val_ind_map, sizes;
+        val_ind_map.push_back(i);
         sizes.push_back(Alarm.get_nth_node(i)->get_nvalues());
         vector<string> parents = Alarm.get_nth_node(i)->get_Parents();
         for (int j = 0; j < parents.size(); j++)
         {
             string parent = parents[j];
             int parent_ind = Alarm.get_index(parent);
-            val_idx.push_back(parent_ind);
+            val_ind_map.push_back(parent_ind);
             sizes.push_back(Alarm.get_nth_node(parent_ind)->get_nvalues());
         }
         vector<double> curr_cpt = Alarm.get_nth_node(i)->get_CPT();
@@ -419,14 +419,14 @@ bool expectation_maximization(network &Alarm)
         {
             val.clear();
             int index;
-            for (int k = 0; k < val_idx.size(); k++)
+            for (int k = 0; k < val_ind_map.size(); k++)
             {
-                val.push_back(datapoints[j][val_idx[k]]);
+                val.push_back(datapoints[j][val_ind_map[k]]);
             }
-            index = get_CPT_Index(val, sizes);
-            // int curr_ind = get_CPT_Index(datapoints[j], val_idx);
-            denominators[index % MOD] += weights[j];
-            numerators[index] += weights[j];
+            index = find_cpt_ind(val, sizes);
+            // int curr_ind = find_cpt_ind(datapoints[j], val_ind_map);
+            denominators[index % MOD] += probabilities[j];
+            numerators[index] += probabilities[j];
         }
         double temp;
         for (int j = 0; j < curr_cpt.size(); j++)
@@ -503,7 +503,7 @@ int main(int argc, char **argv)
 
     network Alarm;
     Alarm = read_network(argv[1]);
-    init_CPT(Alarm);
+    initialise_cpt(Alarm);
     read_data(argv[2], Alarm);
     while (true)
     {
