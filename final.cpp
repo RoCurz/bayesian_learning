@@ -328,7 +328,7 @@ int find_cpt_ind(vector<int> &val, vector<int> &sizes)
 }
 
 // calculate the expectation of missing values
-bool expectation_maximization(network &Alarm)
+void expectation_maximization(network &Alarm)
 {
     //expectation 
     probabilities.clear();
@@ -397,7 +397,7 @@ bool expectation_maximization(network &Alarm)
     }
 
     // maximization
-    double max_diff = 0.0;
+    // double max_diff = 0.0;
     for (int i = 0; i < Alarm.netSize(); i++)
     {
         vector<int> val, val_ind_map, sizes;
@@ -435,21 +435,21 @@ bool expectation_maximization(network &Alarm)
             //     cout<<denominators[j%MOD]+0.001*Alarm.get_nth_node(i)->get_nvalues()<<"\n";
             // }
             temp = (numerators[j] + 0.001) / (denominators[j % MOD] + 0.001 * Alarm.get_nth_node(i)->get_nvalues());
-            max_diff = max(max_diff, abs(temp - curr_cpt[j]));
+            // max_diff = max(max_diff, abs(temp - curr_cpt[j]));
             curr_cpt[j] = temp;
             // cout<<temp<<"\n";
-            if (curr_cpt[j] < 0.001)
+            if (curr_cpt[j] < 0.0001)
             {
-                curr_cpt[j] = 0.001; // Addition for smoothing and avoiding a zero
+                curr_cpt[j] = 0.0001; // Addition for smoothing and avoiding a zero
             }
 
             // need to update previous cpt with curr updated cpt
             Alarm.get_nth_node(i)->set_CPT(curr_cpt);
         }
     }
-    if (max_diff < 0.0001)
-        return true;
-    return false;
+    // if (max_diff < 0.00001)
+    //     return true;
+    // return false;
 }
 
 // write cpt to a file
@@ -507,11 +507,9 @@ int main(int argc, char **argv)
     read_data(argv[2], Alarm);
     while (true)
     {
-        bool f = expectation_maximization(Alarm);
-        if (f)
-            break;
+        expectation_maximization(Alarm);
         auto curr_time = chrono::high_resolution_clock::now();
-        if ((chrono::duration_cast<chrono::milliseconds>(curr_time-start).count())>=120*(1000))
+        if ((chrono::duration_cast<chrono::milliseconds>(curr_time-start).count())>=115*(1000))
             break;
     }
     write_network(Alarm, argv[1]);
